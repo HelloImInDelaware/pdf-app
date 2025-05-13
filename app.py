@@ -52,7 +52,7 @@ if uploaded_files:
         df_final = pd.concat(tablas_totales, ignore_index=True)
         
         # Eliminar filas que comienzan con 'Productos' o 'Estado' (a partir de la fila 2)
-        df_final = df_final[~df_final.iloc[1:, 0].str.startswith('Estado')]
+        df_final = df_final[~df_final.iloc[2:, 0].str.startswith('Estado')]
 
         # Eliminar filas que comienzan con 'Productos'
         df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos')]
