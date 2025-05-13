@@ -56,6 +56,9 @@ if uploaded_files:
 
         df_limpio = limpiar_dataframe(df_final)
 
+        # Eliminar el encabezado (la primera fila) antes de guardar el Excel
+        df_limpio = df_limpio.iloc[1:].reset_index(drop=True)
+
         # Convertir todo a string para evitar problemas de tipos
         df_limpio = df_limpio.applymap(str)
 
