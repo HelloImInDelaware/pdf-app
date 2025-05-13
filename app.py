@@ -6,6 +6,7 @@ import tempfile
 
 # Procesamiento de PDF usando pdfplumber
 
+# Procesamiento de PDF usando pdfplumber
 def procesar_pagina_1(filename, folio):
     with pdfplumber.open(filename) as pdf:
         pagina = pdf.pages[0]
@@ -30,8 +31,11 @@ def procesar_pagina_1(filename, folio):
     else:
         print(f"Advertencia: El número de columnas extraído ({len(df.columns)}) no coincide con el número esperado ({len(columnas)})")
 
-    # Eliminar las columnas innecesarias
-    df = df.drop(columns=["por eliminar"])
+    # Eliminar las columnas innecesarias solo si existen
+    columnas_a_eliminar = ["por eliminar"]
+    for col in columnas_a_eliminar:
+        if col in df.columns:
+            df = df.drop(columns=[col])
 
     # Insertar columna Folio
     df.insert(0, "Folio", folio)
@@ -46,6 +50,7 @@ def procesar_pagina_1(filename, folio):
     df['Lote'] = df['Lote'].astype(str).str.replace(r'\s+', '', regex=True)
 
     return df
+
 
 
 # Función para procesar otras páginas (si existen)
