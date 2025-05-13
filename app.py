@@ -36,12 +36,14 @@ if uploaded_files:
         tablas = extraer_tablas_pdf(archivo)
 
         for i, tabla in enumerate(tablas):
+            # Limpiar la tabla y definir el encabezado
+            df = pd.DataFrame(tabla)
             if encabezado is None:
-                encabezado = tabla.iloc[0]
-                df_limpio = tabla[1:].copy()
+                encabezado = df.iloc[0]  # Primera fila como encabezado
+                df_limpio = df[1:].copy()  # Restante de la tabla
                 df_limpio.columns = encabezado
             else:
-                df_limpio = tabla[1:].copy()
+                df_limpio = df.copy()
                 df_limpio.columns = encabezado
 
             tablas_totales.append(df_limpio)
