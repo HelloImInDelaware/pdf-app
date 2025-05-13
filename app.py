@@ -54,9 +54,6 @@ if uploaded_files:
         # Eliminar filas que comienzan con 'Productos'
         df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos')]
 
-        # Eliminar la primera fila (la más arriba)
-        df_final = df_final.drop(index=0)
-
         df_limpio = limpiar_dataframe(df_final)
 
         # Convertir todo a string para evitar problemas de tipos
