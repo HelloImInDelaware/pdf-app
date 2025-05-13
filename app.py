@@ -5,6 +5,7 @@ import os
 import tempfile
 
 # Procesamiento de PDF usando pdfplumber
+
 def procesar_pagina_1(filename, folio):
     with pdfplumber.open(filename) as pdf:
         pagina = pdf.pages[0]
@@ -13,13 +14,23 @@ def procesar_pagina_1(filename, folio):
     # Convertir la tabla extraída en un DataFrame
     df = pd.DataFrame(tabla[1:], columns=tabla[0])
 
-    # Establecer las columnas esperadas
+    # Verificar cuántas columnas se han extraído
+    print(f"Columnas extraídas: {df.columns.tolist()}")
+
+    # Definir las columnas esperadas (asegurándote de que coincidan con las que extraes)
     columnas = [
         "Estado", "Recursos/Producto", "Código", "Fecha Elaboración", "Lote", "Cantidad / Peso",
         "Peso con Glaseo", "% Glaseo", "por eliminar", "Rut", "Tipo", "Nombre", "Dirección",
         "Tipo Documento", "por eliminar", "Guía", "Fecha Guía", "por eliminar", "por eliminar"
     ]
-    df.columns = columnas
+
+    # Asegurarse de que el número de columnas coincida antes de asignar
+    if len(df.columns) == len(columnas):
+        df.columns = columnas
+    else:
+        print(f"Advertencia: El número de columnas extraído ({len(df.columns)}) no coincide con el número esperado ({len(columnas)})")
+
+    # Eliminar las columnas innecesarias
     df = df.drop(columns=["por eliminar"])
 
     # Insertar columna Folio
@@ -35,6 +46,7 @@ def procesar_pagina_1(filename, folio):
     df['Lote'] = df['Lote'].astype(str).str.replace(r'\s+', '', regex=True)
 
     return df
+
 
 # Función para procesar otras páginas (si existen)
 def procesar_pagina_otras(filename, page_num, folio):
