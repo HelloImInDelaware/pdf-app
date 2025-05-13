@@ -49,15 +49,16 @@ if uploaded_files:
             tablas_totales.append(df_limpio)
 
     if tablas_totales:
+        # Eliminar la primera tabla extraída
+        tablas_totales = tablas_totales[1:]
+
+        # Concatenar el resto de las tablas
         df_final = pd.concat(tablas_totales, ignore_index=True)
         
         # Eliminar filas que comienzan con 'Productos'
         df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos')]
 
         df_limpio = limpiar_dataframe(df_final)
-
-        # Eliminar el encabezado (la primera fila) antes de guardar el Excel
-        df_limpio = df_limpio.iloc[1:].reset_index(drop=True)
 
         # Convertir todo a string para evitar problemas de tipos
         df_limpio = df_limpio.applymap(str)
