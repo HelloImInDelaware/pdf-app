@@ -65,8 +65,9 @@ if uploaded_files:
     if not df_final.empty:
         st.success("✅ ¡Tablas extraídas correctamente!")
 
-        # Mostrar una vista previa
-        st.dataframe(df_final.head(20))
+        # Convertir todos los valores a texto seguro para prevenir errores de Arrow
+        st.dataframe(df_final.astype(str).fillna(""))
+
 
         # Convertir a Excel en memoria
         output = io.BytesIO()
