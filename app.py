@@ -49,12 +49,11 @@ if uploaded_files:
             tablas_totales.append(df_limpio)
 
     if tablas_totales:
-        # Eliminar la primera tabla extraída
-        tablas_totales = tablas_totales[1:]
-
-        # Concatenar el resto de las tablas
         df_final = pd.concat(tablas_totales, ignore_index=True)
         
+        # Eliminar filas que comienzan con 'Productos' o 'Estado' (a partir de la fila 2)
+        df_final = df_final[~df_final.iloc[1:, 0].str.startswith('Estado')]
+
         # Eliminar filas que comienzan con 'Productos'
         df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos')]
 
