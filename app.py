@@ -50,12 +50,9 @@ if uploaded_files:
 
     if tablas_totales:
         df_final = pd.concat(tablas_totales, ignore_index=True)
-
+        
         # Eliminar filas que comienzan con 'Productos'
         df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos')]
-
-        # Eliminar la segunda fila (índice 1), que es la primera fila de datos
-        df_final = df_final.drop(index=1)
 
         df_limpio = limpiar_dataframe(df_final)
 
