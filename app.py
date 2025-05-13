@@ -1,82 +1,69 @@
 import streamlit as st
-import pandas as pd
 import pdfplumber
+import pandas as pd
 import io
-import base64
 
-st.set_page_config(page_title="Procesador de PDFs", layout="centered")
+st.set_page_config(page_title="Extractor de Tablas PDF", layout="wide")
 
-st.title("📄 Procesador de PDFs (Tablas a Excel)")
-st.write("""
-Sube uno o más archivos PDF. El sistema extraerá todas las tablas de todas las páginas
-y generará un archivo Excel con los datos combinados en una sola hoja.
-""")
+st.title("📄 Extracción de Tablas desde Múltiples PDFs")
+st.markdown("Carga uno o varios archivos PDF para extraer sus tablas en un solo Excel.")
 
 uploaded_files = st.file_uploader("Selecciona uno o más archivos PDF", type="pdf", accept_multiple_files=True)
 
-def procesar_todas_las_paginas(file, folio):
-    dataframes = []
+def extraer_tablas_pdf(file):
+    tablas_pdf = []
     with pdfplumber.open(file) as pdf:
         for pagina in pdf.pages:
-            tabla = pagina.extract_table()
-            if tabla:
-                df = pd.DataFrame(tabla[1:], columns=tabla[0])
-                df = df.drop(index=0).reset_index(drop=True)
-                df.insert(0, "Folio", folio)
+            tablas = pagina.extract_tables()
+            for tabla in tablas:
+                df = pd.DataFrame(tabla)
+                # Validar que la tabla tiene contenido útil
+                if df.shape[1] > 1:
+                    tablas_pdf.append(df)
+    return tablas_pdf
 
-                columnas = [
-                    "Folio", "Estado", "Recursos/Productos", "Código", "Fecha Elaboración",
-                    "Lote", "Cantidad/Peso", "Estado Recurso", "% Glaseo", "Peso con Glaseo",
-                    "Rut", "Tipo", "Nombre", "Dirección", "Tipo", "N°", "Fecha",
-                    "Solicitud AOL", "Folio AOL"
-                ]
-                df.columns = columnas[:len(df.columns)]
-
-                # Limpieza
-                df["Cantidad/Peso"] = df["Cantidad/Peso"].str.strip().str.replace(',', '.', regex=False)
-                df["Cantidad/Peso"] = pd.to_numeric(df["Cantidad/Peso"], errors="coerce")
-                if "N°" in df.columns:
-                    df["N°"] = pd.to_numeric(df["N°"], errors="coerce")
-                if "Código" in df.columns:
-                    df["Código"] = pd.to_numeric(df["Código"], errors="coerce")
-                if "Peso con Glaseo" in df.columns:
-                    df["Peso con Glaseo"] = pd.to_numeric(df["Peso con Glaseo"], errors="coerce")
-                if "Lote" in df.columns:
-                    df["Lote"] = df["Lote"].astype(str).str.replace(r'\s+', '', regex=True)
-
-                dataframes.append(df)
-
-    return pd.concat(dataframes, ignore_index=True) if dataframes else pd.DataFrame()
+def limpiar_dataframe(df):
+    df = df.reset_index(drop=True)
+    df = df.applymap(lambda x: str(x) if not isinstance(x, (list, dict, set)) else str(x))
+    df = df.fillna("")
+    return df
 
 if uploaded_files:
-    with st.spinner("Procesando archivos..."):
-        df_final = pd.DataFrame()
+    tablas_totales = []
+    encabezado = None
 
-        for file in uploaded_files:
-            filename = file.name
-            try:
-                folio = pd.to_numeric(filename.split("_")[1], errors="coerce")
-            except:
-                folio = None
+    for archivo in uploaded_files:
+        tablas = extraer_tablas_pdf(archivo)
 
-            df = procesar_todas_las_paginas(file, folio)
-            df_final = pd.concat([df_final, df], ignore_index=True)
+        for i, tabla in enumerate(tablas):
+            if encabezado is None:
+                encabezado = tabla.iloc[0]
+                df_limpio = tabla[1:].copy()
+                df_limpio.columns = encabezado
+            else:
+                df_limpio = tabla[1:].copy()
+                df_limpio.columns = encabezado
 
-    if not df_final.empty:
-        st.success("✅ ¡Tablas extraídas correctamente!")
+            tablas_totales.append(df_limpio)
 
-        # Convertir todos los valores a texto seguro para prevenir errores de Arrow
-        st.dataframe(df_final.astype(str).fillna(""))
+    if tablas_totales:
+        df_final = pd.concat(tablas_totales, ignore_index=True)
+        df_limpio = limpiar_dataframe(df_final)
 
+        st.subheader("📊 Vista previa de las primeras filas extraídas:")
+        st.dataframe(df_limpio.head(20))
 
-        # Convertir a Excel en memoria
+        # Botón para descargar como Excel
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df_final.to_excel(writer, index=False, sheet_name='Tablas')
-        output.seek(0)
+            df_limpio.to_excel(writer, index=False, sheet_name='TablasPDF')
+        excel_data = output.getvalue()
 
-        b64 = base64.b64encode(output.read()).decode()
-        href = f'<a href="data:application/octet-stream;base64,{b64}" download="resultado_tablas.xlsx">📥 Descargar Excel</a>'
-        st.markdown(href, unsafe_allow_html=True)
+        st.download_button(
+            label="⬇️ Descargar Excel",
+            data=excel_data,
+            file_name="tablas_extraidas.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
     else:
-        st.warning("⚠ No se extrajeron tablas de los archivos subidos.")
+        st.warning("No se encontraron tablas válidas en los archivos PDF.")
