@@ -29,22 +29,18 @@ def limpiar_dataframe(df):
 
 if uploaded_files:
     tablas_totales = []
-    encabezado = None
 
     for archivo in uploaded_files:
         tablas = extraer_tablas_pdf(archivo)
 
-        for i, tabla in enumerate(tablas):
+        for tabla in tablas:
             df = pd.DataFrame(tabla)
-            if encabezado is None:
-                encabezado = df.iloc[0].astype(str) + " #1"  # 👈 Agrega "#1" a cada encabezado
-                df_limpio = df[1:].copy()
-                df_limpio.columns = encabezado
-            else:
-                df_limpio = df.copy()
-                df_limpio.columns = encabezado
-
-            tablas_totales.append(df_limpio)
+            if df.shape[0] >= 2:
+                # Usar la segunda fila como encabezado y eliminar las dos primeras filas
+                nuevo_encabezado = df.iloc[1].astype(str)
+                df_limpio = df.iloc[2:].copy()
+                df_limpio.columns = nuevo_encabezado
+                tablas_totales.append(df_limpio)
 
     if tablas_totales:
         df_final = pd.concat(tablas_totales, ignore_index=True)
