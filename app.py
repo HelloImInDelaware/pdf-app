@@ -2,6 +2,7 @@ import streamlit as st
 import pdfplumber
 import pandas as pd
 import io
+import os
 
 st.set_page_config(page_title="Extractor de Tablas PDF", layout="wide")
 
@@ -31,33 +32,21 @@ if uploaded_files:
     tablas_totales = []
 
     for archivo in uploaded_files:
-        nombre_archivo = archivo.name
         tablas = extraer_tablas_pdf(archivo)
+        nombre_archivo = os.path.splitext(os.path.basename(archivo.name))[0]  # Folio desde nombre de archivo
 
-        for tabla in tablas:
+        for i, tabla in enumerate(tablas):
             df = pd.DataFrame(tabla)
-            if df.shape[0] >= 2:
-                nuevo_encabezado = df.iloc[1].astype(str)
-                df_limpio = df.iloc[2:].copy()
-                df_limpio.columns = nuevo_encabezado
 
-                # Agregar columna con el nombre del archivo (folio)
-                df_limpio["Folio"] = nombre_archivo
+            if len(df) < 2:
+                continue  # Evitar errores si no hay suficientes filas
 
-                # Formatear columna 'Cantidad / Peso' si existe
-                for col in df_limpio.columns:
-                    if "Cantidad" in col and "Peso" in col:
-                        df_limpio[col] = (
-                            df_limpio[col]
-                            .astype(str)
-                            .str.replace(".", "", regex=False)  # elimina puntos de miles
-                            .str.replace(",", ".", regex=False)  # convierte coma en punto decimal si fuera necesario
-                        )
-                        # Convertimos a float y luego a string con ',' como separador decimal
-                        df_limpio[col] = pd.to_numeric(df_limpio[col], errors='coerce').round(2)
-                        df_limpio[col] = df_limpio[col].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            encabezado = df.iloc[1].astype(str)
+            df_limpio = df[2:].copy()
+            df_limpio.columns = encabezado
+            df_limpio["Folio"] = nombre_archivo  # ✅ Agregar columna Folio
 
-                tablas_totales.append(df_limpio)
+            tablas_totales.append(df_limpio)
 
     if tablas_totales:
         df_final = pd.concat(tablas_totales, ignore_index=True)
@@ -68,10 +57,17 @@ if uploaded_files:
         # Eliminar filas que comienzan con 'Estado' desde la segunda fila
         df_final = df_final.loc[~(df_final.index > 0) | ~df_final.iloc[:, 0].str.startswith('Estado', na=False)]
 
+        # Limpiar y convertir a texto general
         df_limpio = limpiar_dataframe(df_final)
 
-        # Convertir todo a string para evitar problemas de tipos
-        df_limpio = df_limpio.applymap(str)
+        # ✅ Formatear correctamente la columna "Cantidad / Peso"
+        for col in df_limpio.columns:
+            if "Cantidad" in col and "Peso" in col:
+                # Reemplazar coma por punto si viene como '1,25'
+                df_limpio[col] = df_limpio[col].str.replace(",", ".", regex=False)
+
+                # Convertir a float
+                df_limpio[col] = pd.to_numeric(df_limpio[col], errors="coerce")
 
         # Botón para descargar como Excel
         output = io.BytesIO()
