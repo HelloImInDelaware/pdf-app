@@ -50,6 +50,9 @@ if uploaded_files:
         df_final = pd.concat(tablas_totales, ignore_index=True)
         df_limpio = limpiar_dataframe(df_final)
 
+        # Aseguramos que todos los valores sean strings para evitar problemas con tipos de datos
+        df_limpio = df_limpio.applymap(str)
+
         st.subheader("📊 Vista previa de las primeras filas extraídas:")
         st.dataframe(df_limpio.head(20))
 
