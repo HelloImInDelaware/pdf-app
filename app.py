@@ -50,11 +50,8 @@ if uploaded_files:
         df_final = pd.concat(tablas_totales, ignore_index=True)
         df_limpio = limpiar_dataframe(df_final)
 
-        # Aseguramos que todos los valores sean strings para evitar problemas con tipos de datos
+        # Convertir todo a string para evitar problemas de tipos
         df_limpio = df_limpio.applymap(str)
-
-        st.subheader("📊 Vista previa de las primeras filas extraídas:")
-        st.dataframe(df_limpio.head(20))
 
         # Botón para descargar como Excel
         output = io.BytesIO()
