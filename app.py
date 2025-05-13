@@ -31,15 +31,32 @@ if uploaded_files:
     tablas_totales = []
 
     for archivo in uploaded_files:
+        nombre_archivo = archivo.name
         tablas = extraer_tablas_pdf(archivo)
 
         for tabla in tablas:
             df = pd.DataFrame(tabla)
             if df.shape[0] >= 2:
-                # Usar la segunda fila como encabezado y eliminar las dos primeras filas
                 nuevo_encabezado = df.iloc[1].astype(str)
                 df_limpio = df.iloc[2:].copy()
                 df_limpio.columns = nuevo_encabezado
+
+                # Agregar columna con el nombre del archivo (folio)
+                df_limpio["Folio"] = nombre_archivo
+
+                # Formatear columna 'Cantidad / Peso' si existe
+                for col in df_limpio.columns:
+                    if "Cantidad" in col and "Peso" in col:
+                        df_limpio[col] = (
+                            df_limpio[col]
+                            .astype(str)
+                            .str.replace(".", "", regex=False)  # elimina puntos de miles
+                            .str.replace(",", ".", regex=False)  # convierte coma en punto decimal si fuera necesario
+                        )
+                        # Convertimos a float y luego a string con ',' como separador decimal
+                        df_limpio[col] = pd.to_numeric(df_limpio[col], errors='coerce').round(2)
+                        df_limpio[col] = df_limpio[col].apply(lambda x: f"{x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
                 tablas_totales.append(df_limpio)
 
     if tablas_totales:
