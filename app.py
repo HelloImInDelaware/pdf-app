@@ -39,8 +39,8 @@ if uploaded_files:
             # Limpiar la tabla y definir el encabezado
             df = pd.DataFrame(tabla)
             if encabezado is None:
-                encabezado = df.iloc[0]  # Primera fila como encabezado
-                df_limpio = df[1:].copy()  # Restante de la tabla
+                encabezado = df.iloc[0]  # Usar la primera fila como encabezado
+                df_limpio = df[1:].copy()  # Eliminar la primera fila (que es el encabezado)
                 df_limpio.columns = encabezado
             else:
                 df_limpio = df.copy()
@@ -51,9 +51,6 @@ if uploaded_files:
     if tablas_totales:
         df_final = pd.concat(tablas_totales, ignore_index=True)
         
-        # Eliminar la primera fila
-        df_final = df_final.iloc[1:]
-
         # Eliminar filas que comienzan con 'Productos'
         df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos')]
 
