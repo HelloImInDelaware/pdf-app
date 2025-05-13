@@ -17,7 +17,6 @@ def extraer_tablas_pdf(file):
             tablas = pagina.extract_tables()
             for tabla in tablas:
                 df = pd.DataFrame(tabla)
-                # Validar que la tabla tiene contenido útil
                 if df.shape[1] > 1:
                     tablas_pdf.append(df)
     return tablas_pdf
@@ -36,11 +35,10 @@ if uploaded_files:
         tablas = extraer_tablas_pdf(archivo)
 
         for i, tabla in enumerate(tablas):
-            # Limpiar la tabla y definir el encabezado
             df = pd.DataFrame(tabla)
             if encabezado is None:
-                encabezado = df.iloc[0]  # Usar la primera fila como encabezado
-                df_limpio = df[1:].copy()  # Eliminar la primera fila (que es el encabezado)
+                encabezado = df.iloc[0].astype(str) + " #1"  # 👈 Agrega "#1" a cada encabezado
+                df_limpio = df[1:].copy()
                 df_limpio.columns = encabezado
             else:
                 df_limpio = df.copy()
@@ -50,9 +48,12 @@ if uploaded_files:
 
     if tablas_totales:
         df_final = pd.concat(tablas_totales, ignore_index=True)
-        
+
         # Eliminar filas que comienzan con 'Productos'
-        df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos')]
+        df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos', na=False)]
+
+        # Eliminar filas que comienzan con 'Estado' desde la segunda fila
+        df_final = df_final.loc[~(df_final.index > 0) | ~df_final.iloc[:, 0].str.startswith('Estado', na=False)]
 
         df_limpio = limpiar_dataframe(df_final)
 
