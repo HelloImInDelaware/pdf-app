@@ -51,36 +51,30 @@ if uploaded_files:
     if tablas_totales:
         df_final = pd.concat(tablas_totales, ignore_index=True)
 
-        # Eliminar filas que comienzan con 'Productos'
         df_final = df_final[~df_final.iloc[:, 0].str.startswith('Productos', na=False)]
-
-        # Eliminar filas que comienzan con 'Estado' desde la segunda fila
         df_final = df_final.loc[~(df_final.index > 0) | ~df_final.iloc[:, 0].str.startswith('Estado', na=False)]
 
-        # Limpiar y convertir a texto general
         df_limpio = limpiar_dataframe(df_final)
 
-                # ✅ Limpiar la columna "Lote" quitando saltos de línea, retornos y espacios invisibles
-        for col in df_limpio.columns:
-            if "Lote" in col:
-                df_limpio[col] = (
-                    df_limpio[col]
-                    .astype(str)
-                    .str.replace(r"[\n\r]+", "", regex=True)   # quita saltos de línea
-                    .str.replace(u"\u2028", "", regex=True)     # quita separadores de línea unicode
-                    .str.replace(u"\u000b", "", regex=True)     # vertical tab
-                    .str.replace(u"\u000c", "", regex=True)     # form feed
-                    .str.strip()                                # quita espacios en extremos
-                )
+        # ✅ Limpiar columna N° 5 (índice 4) quitando saltos de línea
+        if df_limpio.shape[1] > 4:  # Asegurar que existe la columna 5
+            df_limpio.iloc[:, 4] = (
+                df_limpio.iloc[:, 4]
+                .astype(str)
+                .str.replace(r"[\n\r]+", "", regex=True)
+                .str.replace(u"\u2028", "", regex=True)
+                .str.replace(u"\u000b", "", regex=True)
+                .str.replace(u"\u000c", "", regex=True)
+                .str.strip()
+            )
 
-
-        # ✅ Formatear correctamente la columna "Cantidad / Peso"
+        # Formatear correctamente la columna "Cantidad / Peso"
         for col in df_limpio.columns:
             if "Cantidad" in col and "Peso" in col:
                 df_limpio[col] = df_limpio[col].str.replace(",", ".", regex=False)
                 df_limpio[col] = pd.to_numeric(df_limpio[col], errors="coerce")
 
-        # Botón para descargar como Excel
+        # Descargar como Excel
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df_limpio.to_excel(writer, index=False, sheet_name='TablasPDF')
