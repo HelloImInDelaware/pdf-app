@@ -60,9 +60,10 @@ if uploaded_files:
         # Limpiar y convertir a texto general
         df_limpio = limpiar_dataframe(df_final)
 
-        # ✅ Limpiar la columna "Lote" quitando todos los espacios, saltos de línea, etc.
-        if "Lote" in df.columns:
-            df['Lote'] = df['Lote'].astype(str).str.replace(r'\s+', '', regex=True)
+        # ✅ Limpiar la columna "Lote" quitando saltos de línea y espacios extra
+        for col in df_limpio.columns:
+            if "Lote" in col:
+                df_limpio[col] = df_limpio[col].str.replace(r"[\n\r\s]+", "", regex=True)
 
         # ✅ Formatear correctamente la columna "Cantidad / Peso"
         for col in df_limpio.columns:
