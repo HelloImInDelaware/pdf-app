@@ -17,10 +17,16 @@ def extraer_tablas_pdf(file):
         for pagina in pdf.pages:
             tablas = pagina.extract_tables()
             for tabla in tablas:
-                df = pd.DataFrame(tabla)
+                # Limpiar saltos de línea y espacios en TODAS las celdas ANTES de crear el DataFrame
+                tabla_limpia = [
+                    [str(celda).replace("\n", "").replace("\r", "").strip() if celda else "" for celda in fila]
+                    for fila in tabla
+                ]
+                df = pd.DataFrame(tabla_limpia)
                 if df.shape[1] > 1:
                     tablas_pdf.append(df)
     return tablas_pdf
+
 
 def limpiar_dataframe(df):
     df = df.reset_index(drop=True)
