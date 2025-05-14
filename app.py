@@ -60,10 +60,19 @@ if uploaded_files:
         # Limpiar y convertir a texto general
         df_limpio = limpiar_dataframe(df_final)
 
-        # ✅ Limpiar la columna "Lote" quitando saltos de línea y espacios extra
+                # ✅ Limpiar la columna "Lote" quitando saltos de línea, retornos y espacios invisibles
         for col in df_limpio.columns:
             if "Lote" in col:
-                df_limpio[col] = df_limpio[col].str.replace(r"[\n\r\s]+", "", regex=True)
+                df_limpio[col] = (
+                    df_limpio[col]
+                    .astype(str)
+                    .str.replace(r"[\n\r]+", "", regex=True)   # quita saltos de línea
+                    .str.replace(u"\u2028", "", regex=True)     # quita separadores de línea unicode
+                    .str.replace(u"\u000b", "", regex=True)     # vertical tab
+                    .str.replace(u"\u000c", "", regex=True)     # form feed
+                    .str.strip()                                # quita espacios en extremos
+                )
+
 
         # ✅ Formatear correctamente la columna "Cantidad / Peso"
         for col in df_limpio.columns:
