@@ -57,7 +57,7 @@ if uploaded_files:
         df_limpio = limpiar_dataframe(df_final)
 
         # ✅ Limpiar columna N° 5 (índice 4) quitando saltos de línea
-        if df_limpio.shape[1] > 4:  # Asegurar que existe la columna 5
+        if df_limpio.shape[1] > 4:
             df_limpio.iloc[:, 4] = (
                 df_limpio.iloc[:, 4]
                 .astype(str)
@@ -66,7 +66,8 @@ if uploaded_files:
                 .str.replace(u"\u000b", "", regex=True)
                 .str.replace(u"\u000c", "", regex=True)
                 .str.strip()
-            )
+    )
+
 
         # Formatear correctamente la columna "Cantidad / Peso"
         for col in df_limpio.columns:
